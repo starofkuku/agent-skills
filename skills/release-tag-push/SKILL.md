@@ -1,6 +1,6 @@
 ---
 name: release-tag-push
-description: 在 GitHub 项目中将当前改动提交为新 commit，依据项目版本文件或已有 tag 生成下一个版本 tag，并推送当前分支和 tag。使用无参数命令 `$release-tag-push` 完成一次版本发布准备；无法安全判断版本或发现 tag 冲突时暂停。
+description: 在 GitHub 项目中将当前改动提交为新 commit，依据项目版本文件或已有 tag 生成下一个版本 tag，并推送当前分支和 tag。使用无参数命令 `$release-tag-push` 完成一次版本发布准备；保留必要的格式化和轻量 lint，但明确跳过本地单元测试、集成测试、E2E、完整构建及其他耗时验证。
 ---
 
 # Release Tag Push
@@ -15,6 +15,14 @@ description: 在 GitHub 项目中将当前改动提交为新 commit，依据项�
 4. 推送当前分支和 tag。
 
 推送 tag 是真实的版本发布动作。不要等待或模拟外部构建结果，只报告 Git 操作结果。
+
+## 验证范围
+
+- 运行项目明确要求的格式化工具；可以运行明显快速且必要的 lint。
+- 不要主动运行任何本地测试，包括单元测试、集成测试、E2E、回归测试、覆盖率和基准测试。
+- 不要运行完整构建、打包、发布检查、CI 模拟或其他耗时验证，即使仓库的一般开发说明建议执行这些步骤。
+- 不要调用 `npm test`、`pytest`、`cargo test`、`go test`、`mvn test`、`gradle test` 或同类测试命令。
+- 完成格式化和必要的轻量检查后，直接继续 Git commit、tag 和 push，不要因缺少本地测试结果而暂停。
 
 ## 执行前检查
 
@@ -44,7 +52,7 @@ description: 在 GitHub 项目中将当前改动提交为新 commit，依据项�
 
 ## 提交、打 tag 和推送
 
-1. 按项目约定运行必要的格式化、lint 或发布前检查。检查失败时停止，不创建版本提交。
+1. 按“验证范围”运行必要的格式化和轻量 lint；明确跳过所有本地测试、完整构建和耗时发布检查。
 2. 只暂存本次任务相关文件，查看 staged diff；不要使用 `git add -A` 混入无关文件。
 3. 按项目已有提交格式创建提交。没有明确约定时使用 `chore: release <tag>`，例如 `chore: release v1.2.4`。
 4. 在新 commit 上创建 annotated tag；遵循项目已有的 lightweight/annotated tag 约定，没有约定时使用：
@@ -66,4 +74,4 @@ description: 在 GitHub 项目中将当前改动提交为新 commit，依据项�
 
 - 提交失败、tag 创建失败或任一次 push 失败时停止，保留现场并报告已成功完成的步骤。
 - 如果分支受保护或没有推送权限，不绕过规则。
-- 完成后报告当前分支、commit SHA、tag 名称、tag 指向的 SHA、推送结果和执行过的检查。
+- 完成后报告当前分支、commit SHA、tag 名称、tag 指向的 SHA、推送结果、执行过的格式化或轻量 lint，并明确注明本地测试已按 Skill 规则跳过。

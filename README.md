@@ -9,7 +9,7 @@
 | `subagent-driven-development` | 子代理驱动开发：每任务一个全新 implementer 子代理 + 任务后审查 + 整体审查，用 Codex 的 `spawn_agent` 工具执行 |
 | `commit-push` | 将当前改动提交并推送到指定分支 |
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
-| `release-tag-push` | 提交当前改动、创建新版本 tag 并推送分支和 tag |
+| `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 
 ## 安装
 

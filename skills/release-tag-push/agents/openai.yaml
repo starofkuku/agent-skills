@@ -1,4 +1,4 @@
 interface:
   display_name: "Release Tag Push"
   short_description: "Commit, tag, and push a new release"
-  default_prompt: "Use $release-tag-push to commit the current changes, create the next project version tag, and push the branch and tag."
+  default_prompt: "Use $release-tag-push to format as needed, skip all local tests and time-consuming builds, then commit, create the next version tag, and push the branch and tag."

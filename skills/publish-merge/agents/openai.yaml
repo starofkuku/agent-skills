@@ -1,0 +1,4 @@
+interface:
+  display_name: "Publish Merge"
+  short_description: "Merge dev into main and push"
+  default_prompt: "Use $publish-merge to merge dev into the repository main branch, push it, and return to dev."

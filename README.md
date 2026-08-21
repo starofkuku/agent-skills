@@ -10,7 +10,7 @@
 | `commit-push` | 将当前改动提交并推送到指定分支 |
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
-| `session-handoff` | 用一次性本地交接文档在干净的新会话中继续长任务 |
+| `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
 
 ## 安装
 
@@ -90,6 +90,8 @@ $session-handoff
 ```
 
 `$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将 `dev` 合并到主分支、推送并切回 `dev`；`$release-tag-push` 提交当前改动、创建版本 tag 并推送；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
+
+`$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 
 ## License
 

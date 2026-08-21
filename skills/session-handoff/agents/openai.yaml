@@ -1,0 +1,4 @@
+interface:
+  display_name: "Session Handoff"
+  short_description: "Hand off work to a fresh Codex session"
+  default_prompt: "Use $session-handoff to create a verified HANDOFF.local.md or consume it in a fresh session, delete it after successful recovery, and continue the repository task."

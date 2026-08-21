@@ -10,6 +10,7 @@
 | `commit-push` | 将当前改动提交并推送到指定分支 |
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
+| `session-handoff` | 用一次性本地交接文档在干净的新会话中继续长任务 |
 
 ## 安装
 
@@ -30,6 +31,9 @@ npx skills add starofkuku/agent-skills --skill publish-merge -a codex
 
 # 只安装版本 tag 推送 skill
 npx skills add starofkuku/agent-skills --skill release-tag-push -a codex
+
+# 只安装会话交接 skill
+npx skills add starofkuku/agent-skills --skill session-handoff -a codex
 
 # 全局安装（到 ~/.codex/skills）
 npx skills add -g starofkuku/agent-skills --skill subagent-driven-development -a codex
@@ -58,8 +62,11 @@ skills/
 ├── publish-merge/
 │   ├── SKILL.md                  # 合并主分支并推送
 │   └── agents/openai.yaml        # Codex UI 元数据
-└── release-tag-push/
-    ├── SKILL.md                  # 提交、打 tag 并推送版本
+├── release-tag-push/
+│   ├── SKILL.md                  # 提交、打 tag 并推送版本
+│   └── agents/openai.yaml        # Codex UI 元数据
+└── session-handoff/
+    ├── SKILL.md                  # 创建或读取本地会话交接
     └── agents/openai.yaml        # Codex UI 元数据
 ```
 
@@ -79,9 +86,10 @@ npx skills use ./agent-skills --skill subagent-driven-development
 $commit-push dev
 $publish-merge
 $release-tag-push
+$session-handoff
 ```
 
-`$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将 `dev` 合并到主分支、推送并切回 `dev`；`$release-tag-push` 提交当前改动、创建版本 tag 并推送。
+`$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将 `dev` 合并到主分支、推送并切回 `dev`；`$release-tag-push` 提交当前改动、创建版本 tag 并推送；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
 
 ## License
 

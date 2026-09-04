@@ -9,7 +9,7 @@ description: 将开发分支合并到主分支，创建合并提交并推送主�
 
 无参数调用 `$publish-merge` 时使用：
 
-- 源分支：`dev`
+- 源分支：`dev` (如果是`*` 则是当前分支 比如 `$publish-merge * dev` 就是操作当前分支到dev分支 )
 - 目标分支：仓库默认分支，优先识别 `main`，其次识别 `master`
 - 远程：`origin`
 

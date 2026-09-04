@@ -16,7 +16,7 @@ description: 将开发分支合并到主分支，创建合并提交并推送主�
 也可以使用 `$publish-merge dev main` 显式指定源分支和目标分支。先从仓库配置和已有文档确认实际名称，不能静默猜测错误分支。
 
 ## 执行流程
-
+> 不要推送源分支 除非  `$publish-merge dev main --push-origin` 后面添加--push-origin 这个参数
 1. 阅读仓库根目录及相关目录中的 `AGENTS.md`、`CONTRIBUTING.md`、README 和 Git 配置，遵守分支保护与合并约定。
 2. 要求工作区干净：
 

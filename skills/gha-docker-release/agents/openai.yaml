@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Actions Docker Release"
+  short_description: "Build and push Docker images from a fork"
+  default_prompt: "Use $gha-docker-release to configure or fix a GitHub Actions workflow that builds and pushes a Docker image using organization-level variables and secrets."

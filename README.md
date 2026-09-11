@@ -11,6 +11,7 @@
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
+| `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像并发送结果邮件 |
 
 ## 安装
 
@@ -34,6 +35,9 @@ npx skills add starofkuku/agent-skills --skill release-tag-push -a codex
 
 # 只安装会话交接 skill
 npx skills add starofkuku/agent-skills --skill session-handoff -a codex
+
+# 只安装 GitHub Actions 镜像发布 skill
+npx skills add starofkuku/agent-skills --skill gha-docker-release -a codex
 
 # 全局安装（到 ~/.codex/skills）
 npx skills add -g starofkuku/agent-skills --skill subagent-driven-development -a codex
@@ -65,9 +69,15 @@ skills/
 ├── release-tag-push/
 │   ├── SKILL.md                  # 提交、打 tag 并推送版本
 │   └── agents/openai.yaml        # Codex UI 元数据
-└── session-handoff/
-    ├── SKILL.md                  # 创建或读取本地会话交接
-    └── agents/openai.yaml        # Codex UI 元数据
+├── session-handoff/
+│   ├── SKILL.md                  # 创建或读取本地会话交接
+│   └── agents/openai.yaml        # Codex UI 元数据
+└── gha-docker-release/
+    ├── SKILL.md                  # 镜像构建推送与邮件通知
+    ├── agents/openai.yaml        # Codex UI 元数据
+    └── references/
+        ├── credentials.md        # 组织级 Variables/Secrets
+        └── workflow-templates.md # 可复制的 workflow 模板
 ```
 
 ## 本地开发
@@ -87,11 +97,14 @@ $commit-push dev
 $publish-merge
 $release-tag-push
 $session-handoff
+$gha-docker-release
 ```
 
 `$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将 `dev` 合并到主分支、推送并切回 `dev`；`$release-tag-push` 提交当前改动、创建版本 tag 并推送；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
 
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
+
+`$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送，以及发布结果邮件。
 
 ## License
 

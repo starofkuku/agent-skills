@@ -42,7 +42,7 @@ tag 推送或手动触发 → 构建 Docker 镜像 → 登录 Docker Hub 并推�
 
 关键约束：
 
-- `DOCKERHUB_ACCESSTOKEN` 是 Docker Hub Personal Access Token，不是账号密码；推送镜像需要 Read & Write 权限。
+- `DOCKERHUB_ACCESSTOKEN` 是 Docker Hub Personal Access Token，不是账号密码；推送镜像必须在 token 的 **Access permissions** 里勾选 `Write`。
 - 登录统一走 `docker/login-action`，密码只经 `secrets.*` 注入。不要 echo secrets，不要写入镜像、构建参数或日志。
 - 不要把 secrets 暴露给来自 fork 的 `pull_request` 事件。需要 secrets 的构建只应在 `push` tag、`workflow_dispatch` 或受信任分支上运行。
 - `FEISHU_SIGN` 存的是飞书机器人后台的**签名密钥**，不是要发送的 `sign` 字段。`sign` 每次发送前用 `HMAC-SHA256` 现算，固定值发过去会被判签名失败。

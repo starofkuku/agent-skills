@@ -31,7 +31,8 @@
 ## Docker Hub Access Token
 
 1. 登录 Docker Hub，进入 **Account settings → Personal access tokens**。
-2. 新建 token，权限选择 **Read & Write**（只读 token 无法推送镜像）。
+2. 新建 token 时在 **Access permissions** 里勾选 **Write**（推送镜像必需）；需要拉取再加 `Read`；`Delete` 不要勾选。
+   注意现在的权限是 `Read` / `Write` / `Delete` 三个**独立勾选**项，旧版下拉框里的 "Read-only" / "Read & Write" 档位已经不存在，不要在界面上找它们。
 3. 把生成的 token 存为 `DOCKERHUB_ACCESSTOKEN`。token 只在创建时显示一次，丢失后需要重建。
 4. 若镜像推送到组织命名空间，确认该账号属于对应团队且拥有写权限。
 
@@ -73,5 +74,5 @@
 ## 轮换与最小权限
 
 - Docker Hub token 泄露或人员变动时立即撤销并重新生成，然后更新组织级 Secret。
-- 只授予推送所必需的 Read & Write，不授予账号级管理权限。
+- 只勾选推送所必需的 `Write`，需要拉取时再加 `Read`；不要勾选 `Delete`。
 - 收件地址、SMTP 主机等非敏感配置优先放 Variables，减少 Secret 数量。

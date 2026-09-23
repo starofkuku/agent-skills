@@ -21,6 +21,10 @@
 | `SMTP_PASSWORD` | SMTP 密码或服务商 App Password |
 | `SMTP_FROM` | 发件地址，通常与登录账号一致 |
 | `NOTIFY_EMAIL_TO` | 收件地址；action 支持时可用逗号分隔多个 |
+| `FEISHU_WEB_HOOK` | 飞书自定义机器人的 Webhook 地址，形如 `https://open.feishu.cn/open-apis/bot/v2/hook/<uuid>` |
+| `FEISHU_SIGN` | 飞书机器人安全设置里的**签名密钥**，用于现算 `sign` |
+
+只有被 `--channel` 选中的渠道，对应的 Secrets 才是必需：只发邮件不需要 `FEISHU_*`，只发飞书不需要 `SMTP_*` / `NOTIFY_EMAIL_TO`。
 
 `GITHUB_TOKEN` 由 GitHub Actions 自动注入，不需要手动创建。
 
@@ -38,6 +42,24 @@
 1. 为发送账号启用两步验证。
 2. 创建 Google App Password，把它作为 `SMTP_PASSWORD`，不要使用 Google 账号主密码。
 3. `SMTP_FROM` 与 `SMTP_USERNAME` 一般是同一个地址，否则部分 SMTP 服务会拒绝发信。
+
+## 飞书机器人配置
+
+1. 在目标群聊里添加 **自定义机器人**（群设置 → 群机器人 → 添加机器人）。
+2. 复制生成的 Webhook 地址，存为 `FEISHU_WEB_HOOK`。地址里包含 token，属凭据，**放 Secret 而不是 Variable**。
+3. 安全设置选 **签名校验**，复制签名密钥存为 `FEISHU_SIGN`。本 skill 的模板按签名校验实现；若机器人改用其他安全设置（如关键词或 IP 白名单），需要相应调整发送逻辑，模板不覆盖。
+4. 消息会发到机器人所属的群；需要迁到另一个群时，在新群里重新添加机器人并更新 `FEISHU_WEB_HOOK`。
+5. 国际版 Lark 的域名是 `open.larksuite.com`（飞书为 `open.feishu.cn`），除域名外流程相同。
+
+### 签名机制（模板已实现，改脚本时别改错）
+
+- 待签名字符串为 `<timestamp>\n<secret>`，`timestamp` 是**秒级** Unix 时间戳。
+- `sign = base64(HMAC-SHA256(key = 待签名字符串, message = 空))`。注意 **key 是「时间戳 + 换行 + 密钥」、message 为空**，与习惯上的「key = 密钥、message = 内容」相反；写反了会直接签名失败。
+- `FEISHU_SIGN` 存的是**长期不变的签名密钥**。`sign` 必须每次都现算，不能把一次算出来的 `sign` 当成固定值存进 Secret。
+- 请求体：`{"timestamp": "<秒级>", "sign": "<base64>", "msg_type": "text", "content": {"text": "..."}}`。
+- `timestamp` 与飞书服务器时间偏差超过 **1 小时**会被拒，错误信息为 `sign match fail or timestamp is not within one hour from current time`；runner 时钟不准会直接发送失败。
+- **业务错误时 HTTP 状态仍是 200**，响应体形如 `{"code":19021,"msg":"..."}`。判定成功必须看 `code == 0`，不能只看 HTTP 状态或 curl 退出码。
+- 本模板每次 run 只发一条汇总消息（见 `SKILL.md` 的「通知必须合并成一封」）。
 
 ## 组织级配置与 fork 注意事项
 

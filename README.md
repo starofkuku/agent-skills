@@ -11,7 +11,7 @@
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
-| `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像并发送结果邮件 |
+| `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，并按 `--channel` 发送一封合并的结果通知（邮件/飞书机器人） |
 
 ## 安装
 
@@ -73,11 +73,11 @@ skills/
 │   ├── SKILL.md                  # 创建或读取本地会话交接
 │   └── agents/openai.yaml        # Codex UI 元数据
 └── gha-docker-release/
-    ├── SKILL.md                  # 镜像构建推送与邮件通知
+    ├── SKILL.md                  # 镜像构建推送与合并结果通知
     ├── agents/openai.yaml        # Codex UI 元数据
     └── references/
-        ├── credentials.md        # 组织级 Variables/Secrets
-        └── workflow-templates.md # 可复制的 workflow 模板
+        ├── credentials.md        # 组织级 Variables/Secrets（含飞书机器人）
+        └── workflow-templates.md # 可复制的 workflow 模板（含通知合并与飞书签名）
 ```
 
 ## 本地开发
@@ -104,7 +104,7 @@ $gha-docker-release
 
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 
-`$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送，以及发布结果邮件。
+`$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送，以及发布结果通知。通知渠道由 `--channel` 指定，默认 `email`：`$gha-docker-release --channel feishu` 只发飞书机器人，`$gha-docker-release --channel email,feishu` 两种都发。一次发布（一次 run）只发一封通知，正文汇总该 run 内全部 job 的结果。
 
 ## License
 

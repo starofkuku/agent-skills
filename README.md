@@ -12,6 +12,7 @@
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
 | `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，并按 `--channel` 发送一封合并的结果通知（邮件/飞书机器人） |
+| `plain-change-report` | 把代码改动整理成面向非技术读者的通俗中文汇报，支持未提交改动、指定提交区间或最近 N 次提交 |
 
 ## 安装
 
@@ -38,6 +39,9 @@ npx skills add starofkuku/agent-skills --skill session-handoff -a codex
 
 # 只安装 GitHub Actions 镜像发布 skill
 npx skills add starofkuku/agent-skills --skill gha-docker-release -a codex
+
+# 只安装通俗改动汇报 skill
+npx skills add starofkuku/agent-skills --skill plain-change-report -a codex
 
 # 全局安装（到 ~/.codex/skills）
 npx skills add -g starofkuku/agent-skills --skill subagent-driven-development -a codex
@@ -72,12 +76,18 @@ skills/
 ├── session-handoff/
 │   ├── SKILL.md                  # 创建或读取本地会话交接
 │   └── agents/openai.yaml        # Codex UI 元数据
-└── gha-docker-release/
-    ├── SKILL.md                  # 镜像构建推送与合并结果通知
+├── gha-docker-release/
+│   ├── SKILL.md                  # 镜像构建推送与合并结果通知
+│   ├── agents/openai.yaml        # Codex UI 元数据
+│   └── references/
+│       ├── credentials.md        # 组织级 Variables/Secrets（含飞书机器人）
+│       └── workflow-templates.md # 可复制的 workflow 模板（含通知合并与飞书签名）
+└── plain-change-report/
+    ├── SKILL.md                  # 改动通俗汇报（未提交/区间/指定提交）
     ├── agents/openai.yaml        # Codex UI 元数据
     └── references/
-        ├── credentials.md        # 组织级 Variables/Secrets（含飞书机器人）
-        └── workflow-templates.md # 可复制的 workflow 模板（含通知合并与飞书签名）
+        ├── plain-language.md     # 代码改动 → 通俗表达的对照表
+        └── git-ranges.md         # 各汇报范围的命令与边界
 ```
 
 ## 本地开发
@@ -98,6 +108,7 @@ $publish-merge
 $release-tag-push
 $session-handoff
 $gha-docker-release
+$plain-change-report
 ```
 
 `$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将 `dev` 合并到主分支、推送并切回 `dev`；`$release-tag-push` 提交当前改动、创建版本 tag 并推送；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
@@ -105,6 +116,10 @@ $gha-docker-release
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 
 `$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送，以及发布结果通知。通知渠道由 `--channel` 指定，默认 `email`：`$gha-docker-release --channel feishu` 只发飞书机器人，`$gha-docker-release --channel email,feishu` 两种都发。一次发布（一次 run）只发一封通知，正文汇总该 run 内全部 job 的结果。
+
+`$plain-change-report` 把工作区里未提交的改动整理成一份**不懂技术的人也能看懂**的中文汇报：按「新增功能 / 问题修复 / 体验优化 / 其他调整」分类，每条标注业务模块，末尾给出「需要留意」的上线关注点。报告写入仓库根目录的 `CHANGE-REPORT.local.md`（自动加入 `.git/info/exclude`，不会误提交），同时在对话里输出一份。它只读不改，不会提交或修改代码。
+
+汇报范围可由参数指定：无参数为未提交的改动；`--since v1.1.0` 汇报自某版本/提交以来；`--commits a1b2c3d e4f5a6b` 汇报指定的几次提交；`--last 5` 汇报最近 5 次提交。总结多次提交时只写**最终结果**（净变化），中途加过又删掉的内容不会出现在报告里。
 
 ## License
 

@@ -5,6 +5,7 @@
 ## 目录
 
 - [通用校验](#通用校验)
+- [工作区模式判定与多仓库](#工作区模式判定与多仓库)
 - [未提交改动（默认）](#未提交改动默认)
 - [--since](#--since)
 - [--commits](#--commits)
@@ -24,6 +25,41 @@ git rev-parse --verify --quiet "<ref>^{commit}" >/dev/null || echo "ref 不存�
 `git rev-parse` 对不存在的 ref **退出码为 128**，而 `git log nosuchref..HEAD` 也会返回 128 —— 两者都能靠退出码判断，但**不要用管道后的 `$?`**（会被 `head`、`xargs` 之类吃掉）。直接用 `if git rev-parse --verify --quiet ...; then` 的形式。
 
 ref 无效时**停止并告诉调用者**，不要静默退化成默认模式。
+
+## 工作区模式判定与多仓库
+
+把调用时的当前目录作为工作区根目录：
+
+```bash
+git rev-parse --show-toplevel        # 成功 → 单仓库模式；失败(128) → 看子目录
+```
+
+多仓库模式下找出全部子仓库（排除依赖目录，限深度防止误扫）：
+
+```bash
+find . -mindepth 2 -maxdepth 3 -name .git -not -path '*/node_modules/*' \
+  | xargs -n1 dirname | sort
+```
+
+- `.git` 可能是文件（worktree、submodule），所以**不要加 `-type d`**。
+- 多仓库模式下，后面所有 git 命令都要加 `git -C <repo>`。
+
+逐仓库查未提交改动，用于自动筛选纳入清单：
+
+```bash
+for d in <仓库清单>; do
+  n=$(git -C "$d" status --porcelain=v1 -uall | wc -l)
+  echo "$d $n"
+done
+```
+
+`--repo` 名单匹配用**目录名**（`basename "$d"`）：
+
+```bash
+basename ./admin-front        # → admin-front
+```
+
+多仓库 + 范围参数时逐仓库校验 ref，没有该 ref 的仓库跳过并把原因写进对话（前后端 tag 不同步是常态）；**全部仓库都没有该 ref 才报错停止**。报告里绝不按仓库分节，同一功能前后端的改动合并成一条，合并不了的宁可分开写。
 
 ## 未提交改动（默认）
 
@@ -141,3 +177,7 @@ N=$(git log --no-walk --oneline <sha...> | wc -l)
 | `--last N` 且 `N >= 提交总数` | `HEAD~N` 不存在，命令报错 | 回退到空树哈希 |
 | `git log --since=<日期>` | 按提交时间过滤，会漏提交 | 用 `ref..HEAD` 区间 |
 | ref 不存在时静默降级 | 报告范围与调用者要求不符 | 先 `git rev-parse --verify` 校验并报错 |
+| 从单个仓库内部调用想跨仓库汇报 | 后端仓库不在扫描范围内，报告会漏一半 | 到前后端的**共同父目录**调用 |
+| 子仓库没改动也纳入 | 多前端场景报告里一堆「无改动」 | 未提交模式只纳入 `status -uall` 非空的仓库 |
+| `find -name .git -type d` | worktree/submodule 的 `.git` 是文件，会被漏掉 | 不加 `-type d` |
+| 多仓库模式下改子仓库的 exclude | 报告文件不在子仓库管辖内，改了也没意义 | 只有工作区根目录本身是仓库时才排除 |

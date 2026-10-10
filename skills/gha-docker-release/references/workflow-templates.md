@@ -58,10 +58,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 一个 workflow 只能有这一个通知 job；所有发布 job 都汇总到这里
+  # --no-release 时删除整个 release job，并同步把 notify 的 needs 里的 release 删掉
+  release:
+    name: Create GitHub Release
+    needs: [docker]
+    if: ${{ github.ref_type == 'tag' }}
+    permissions:
+      contents: write          # 只给这个 job，不要放宽到 workflow 级
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，跳过创建（幂等，支持重跑）"
+            exit 0
+          fi
+          gh release create "$TAG" --title "$TAG" --generate-notes
+
+  # 一个 workflow 只能有这一个通知 job；所有发布 job（含 release）都汇总到这里
   notify:
     name: Notify workflow result
-    needs: [docker]
+    needs: [docker, release]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -167,6 +187,8 @@ jobs:
 
 `Build result summary` 与渠道无关，任何渠道组合都要保留：多个渠道共用同一份汇总正文，不要在各自的 step 里重复拼一遍。
 
+`--no-release` 与 `--channel` 独立：前者删除 release job 及 `needs` 里的 `release`，后者只删对应通知 step。
+
 ## 追加到其他 workflow
 
 只配好 Variables/Secrets 不会自动发邮件或飞书。需要通知的 workflow 各自追加**一个** notify job，其余内容与 `release.yml` 的 notify job 完全一致，整段复制，不要改写：
@@ -182,6 +204,12 @@ jobs:
 ```
 
 ## 使用要点
+
+- **Release 创建是链路默认环节**，不是可选备注。只删它必须是因为显式传了 `--no-release`，且删的时候要同步改 notify 的 `needs`。
+- release job 用 runner 自带的 `gh` CLI，不引入第三方 action；token 用自动提供的 `GITHUB_TOKEN`，不需要 PAT。
+- release job 做成**幂等**（先 `gh release view` 判断存在再创建）：同一 tag 重跑不会因 `already exists` 失败。
+- release 在 docker 之后（`needs: [docker]`）：镜像没推上去就不发 Release，两者不会不一致。
+- 分支上手动触发（`workflow_dispatch`）时 `github.ref_type != 'tag'`，release job 直接跳过，通知里显示 `skipped`，属正常。
 
 - **一个 workflow 只允许一个 notify job。** 给每个 job 各挂一个通知 job，就会变成"每个任务发一封"。
 - `needs` 必须列出该 workflow 的**全部**发布 job。`needs` 只包含**直接依赖**，链式依赖（A → B → C）里只写 C 拿不到 A、B 的结果；漏写的 job 不会报错，只会让通知静默少一项。

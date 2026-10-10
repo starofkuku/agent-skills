@@ -11,7 +11,7 @@
 | `publish-merge` | 将开发分支合并到主分支、推送并切回开发分支 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
-| `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，并按 `--channel` 发送一封合并的结果通知（邮件/飞书机器人） |
+| `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，tag 触发时创建 GitHub Release，并按 `--channel` 发送一封合并的结果通知（邮件/飞书；`--no-release` 可关闭 Release） |
 | `plain-change-report` | 把代码改动整理成面向非技术读者的通俗中文汇报；支持未提交改动、提交区间、最近 N 次，前后端分仓/多前端共一后端时自动合并为一份报告 |
 
 ## 安装
@@ -115,7 +115,7 @@ $plain-change-report
 
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 
-`$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送，以及发布结果通知。通知渠道由 `--channel` 指定，默认 `email`：`$gha-docker-release --channel feishu` 只发飞书机器人，`$gha-docker-release --channel email,feishu` 两种都发。一次发布（一次 run）只发一封通知，正文汇总该 run 内全部 job 的结果。
+`$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送、GitHub Release 创建，以及发布结果通知。通知渠道由 `--channel` 指定，默认 `email`：`$gha-docker-release --channel feishu` 只发飞书机器人，`$gha-docker-release --channel email,feishu` 两种都发。一次发布（一次 run）只发一封通知，正文汇总该 run 内全部 job 的结果。`v*` tag 推送时**默认创建 GitHub Release**（自动生成说明，可重复执行不会报已存在）；`--no-release` 显式关闭；分支上手动触发只构建推送不建 Release。
 
 `$plain-change-report` 把工作区里未提交的改动整理成一份**不懂技术的人也能看懂**的中文汇报：按「新增功能 / 问题修复 / 体验优化 / 其他调整」分类，每条标注业务模块，末尾给出「需要留意」的上线关注点。报告写入仓库根目录的 `CHANGE-REPORT.local.md`（自动加入 `.git/info/exclude`，不会误提交），同时在对话里输出一份。它只读不改，不会提交或修改代码。
 

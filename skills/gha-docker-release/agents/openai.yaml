@@ -1,4 +1,4 @@
 interface:
   display_name: "GitHub Actions Docker Release"
-  short_description: "Build and push Docker images from a fork, with one merged result notification"
-  default_prompt: "Use $gha-docker-release to configure or fix a GitHub Actions workflow that builds and pushes a Docker image using organization-level variables and secrets. The workflow must send exactly one merged result notification per run. Use --channel feishu, --channel email, or --channel email,feishu to pick notification channels; the default is email."
+  short_description: "Build and push Docker images, create the GitHub Release, and send one merged notification"
+  default_prompt: "Use $gha-docker-release to configure or fix a GitHub Actions workflow that builds and pushes a Docker image using organization-level variables and secrets, creates the GitHub Release on tag push (gh release create with --generate-notes, idempotent, contents: write scoped to that job only), and sends exactly one merged result notification per run. --no-release disables Release creation. Use --channel feishu, --channel email, or --channel email,feishu to pick notification channels; the default is email."

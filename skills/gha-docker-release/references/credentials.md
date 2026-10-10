@@ -26,7 +26,7 @@
 
 只有被 `--channel` 选中的渠道，对应的 Secrets 才是必需：只发邮件不需要 `FEISHU_*`，只发飞书不需要 `SMTP_*` / `NOTIFY_EMAIL_TO`。
 
-`GITHUB_TOKEN` 由 GitHub Actions 自动注入，不需要手动创建。
+`GITHUB_TOKEN` 由 GitHub Actions 自动注入，不需要手动创建。创建 GitHub Release 用的就是它：release job 单独声明 `permissions: contents: write`，不要把写权限放宽到整个 workflow。
 
 ## Docker Hub Access Token
 

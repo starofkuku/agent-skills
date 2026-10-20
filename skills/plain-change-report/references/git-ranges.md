@@ -8,6 +8,7 @@
 - [工作区模式判定与多仓库](#工作区模式判定与多仓库)
 - [未提交改动（默认）](#未提交改动默认)
 - [--since](#--since)
+- [--from / --to](#--from----to)
 - [--commits](#--commits)
 - [--last](#--last)
 - [取出净变化](#取出净变化)
@@ -90,6 +91,32 @@ git diff --stat "<ref>..HEAD"                          # 净变化
 - 区间为空（`ref` 就是 HEAD）时提交数为 0、diff 也为空，按「该范围内没有改动」处理。
 - 用 `--since` 的**表达式**而不是 `git log --since=<日期>`：后者按**提交时间**过滤，遇到换机器、rebase、时间倒挂会漏提交，不要用。
 
+## --from / --to
+
+`--from <tagA> --to <tagB>` 汇报**两次发布之间**的净变化，配合 `publish-merge` 合并后自动打的递增 tag 使用（作为发布说明）。
+
+两端都要先校验；`--to` 省略时取**版本序最新**的 `v*` tag，并把实际取到的值报给调用者：
+
+```bash
+git rev-parse --verify --quiet "<from>^{commit}"
+git rev-parse --verify --quiet "<to>^{commit}"
+
+# --to 省略时的解析（与 publish-merge 打 tag 用的是同一条命令，行为必须一致）
+TO=$(git tag --list 'v[0-9]*' --sort=-v:refname \
+  | grep -E '^v[0-9]+(\.[0-9]+)+$' | head -1)
+```
+
+取改动（区间语义与 `--since` 相同，`A..B` 不含 A 自身）：
+
+```bash
+git log --oneline --no-merges "<from>..<to>"
+git diff --stat "<from>..<to>"
+```
+
+与 `--since` 的区别：`--since X` 终点是**当前 HEAD**（含 tag 之后的新提交，进展视角）；`--from/--to` 两端都是 tag（这次发布相对上次发布变了什么，对比视角）。刚打完 tag 且 HEAD 就是该 tag 时两者结果相同，但 `--from/--to` 不会受后续新提交影响。
+
+多仓库模式：任一端点在某仓库不存在就跳过该仓库并说明（前后端 tag 不同步是常态）；全部仓库都缺同一端点才报错停止。
+
 ## --commits
 
 `--commits a1b2c3d e4f5a6b` 指定**离散**的几次提交。这种情况**不能**用 `A..B` 区间 diff。
@@ -170,6 +197,8 @@ N=$(git log --no-walk --oneline <sha...> | wc -l)
 
 | 坑 | 后果 | 正确做法 |
 | --- | ---- | -------- |
+| 只用 `--sort=-v:refname` 取最新 tag | `v2-alpha` 这类非语义化 tag 会排在最前（实测） | 叠加 `grep -E '^v[0-9]+(\.[0-9]+)+$'` 过滤 |
+| 大写 `V0.0.1` 的 tag | git 通配区分大小写，不会被 `v*` 匹配，也触发不了按 `v*` 触发的 workflow（实测） | tag 一律小写 `v` 开头 |
 | `git status --porcelain` 不带 `-uall` | 新增目录被折叠成一行，目录内文件全看不见 | 必须 `-uall` |
 | 只跑 `git diff` | 漏掉全部已暂存改动 | 用 `git diff HEAD` |
 | 只看 diff 不看未跟踪文件 | 漏掉全部新增文件 | 逐个读 `??` 清单里的文件 |

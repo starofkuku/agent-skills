@@ -12,7 +12,8 @@ description: 把代码改动整理成一份面向非技术读者的通俗中文�
 | 参数 | 作用 |
 | ---- | ---- |
 | 无 | 未提交的改动（默认） |
-| `--since <ref>` | 自某个 tag / 提交以来到当前 |
+| `--since <ref>` | 自某个 tag / 提交以来到**当前 HEAD**（进展视角，含 tag 之后的新提交） |
+| `--from <tag> [--to <tag>]` | **两次发布之间**的变化：`--from` 到 `--to` 的净变化（发布对比视角）。`--to` 省略时取版本序最新的 `v*` tag |
 | `--commits <ref>...` | 指定的这些提交（可非连续） |
 | `--last <N>` | 最近 N 次提交 |
 | `--repo <名字>` | 限定只汇报哪几个仓库，逗号分隔或多次传 |
@@ -22,13 +23,17 @@ description: 把代码改动整理成一份面向非技术读者的通俗中文�
 ```text
 $plain-change-report
 $plain-change-report --since v1.1.0
+$plain-change-report --from v0.0.1 --to v0.0.2
+$plain-change-report --from v0.0.1                 # 到最新 tag
 $plain-change-report --commits a1b2c3d e4f5a6b
 $plain-change-report --last 5
 $plain-change-report --repo admin-front,backend          # 未提交模式 + 限定仓库
 $plain-change-report --repo admin-front,backend --since v1.1.0
 ```
 
-- `--since` / `--commits` 的值可以是**提交号、tag、分支名**；三个范围参数**互斥**，一次只用一个。
+- `--since` / `--commits` 的值可以是**提交号、tag、分支名**；范围参数（`--since` / `--from` / `--last`）**互斥**，一次只用一个。
+- `--from/--to` 配合 `publish-merge` 的自动 tag 使用：每次合并到主分支会自动打递增 tag，用 `--from <上一个tag> --to <本次tag>` 就能总结这次发布引入的全部变化。
+- `--from` / `--to` 两端解析结果（含 `--to` 省略时实际取到的 tag）必须先在**对话里**报出来再写报告。
 - `--last` 只接受 **≥1 的整数**，不是就报错，不要猜。
 - `--repo` 是修饰参数，可与任意范围参数组合，也可单独用。按**目录名**匹配，不匹配任何仓库时把不匹配的名字报给调用者。
 - 各模式的精确命令、边界处理和已踩过的坑见 [references/git-ranges.md](references/git-ranges.md)。

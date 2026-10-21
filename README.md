@@ -8,7 +8,7 @@
 |-------|------|
 | `subagent-driven-development` | 子代理驱动开发：每任务一个全新 implementer 子代理 + 任务后审查 + 整体审查，用 Codex 的 `spawn_agent` 工具执行 |
 | `commit-push` | 将当前改动提交并推送到指定分支 |
-| `publish-merge` | 将源分支合并到目标分支并推送、切回源分支；仅当目标是主分支（main/master）时才自动打递增版本 tag（无 tag 从 v0.0.1 起，已有则 patch +1），合并到 develop/test 等中间分支不打；面向纯 Git 环境 |
+| `publish-merge` | 将源分支合并到目标分支并推送、切回源分支；仅当目标是主分支（main/master）时才自动打递增版本 tag（无 tag 从 v0.0.1 起，已有则 patch +1，**仅本地不推送**；`--prefix <前缀>` 打独立系列如 `ieioms-v0.0.1`），合并到 develop/test 等中间分支不打；面向纯 Git 环境 |
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
 | `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，tag 触发时创建 GitHub Release，并按 `--channel` 发送一封合并的结果通知（邮件/飞书；`--no-release` 可关闭 Release） |
@@ -111,7 +111,7 @@ $gha-docker-release
 $plain-change-report
 ```
 
-`$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将源分支合并到目标分支并切回源分支，典型两阶段：`$publish-merge * develop`（开发→测试，不打 tag）、`$publish-merge develop master`（测试→主分支，**自动打递增版本 tag**，首次 `v0.0.1`，之后 patch +1；只有目标是主分支时才打），`--no-tag` 可跳过。它面向纯 Git 环境（不用 GitHub），与 `plain-change-report` 配对：主分支上的 tag 作为锚点，供 `$plain-change-report --from <上一tag> --to <本tag>` 总结这次发布的变更；`$release-tag-push` 提交当前改动、创建版本 tag 并推送（GitHub Actions 发布场景专用）；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
+`$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将源分支合并到目标分支并切回源分支，典型两阶段：`$publish-merge * develop`（开发→测试，不打 tag）、`$publish-merge develop master`（测试→主分支，**自动打递增版本 tag**，首次 `v0.0.1`，之后 patch +1，**只打本地不推送远程**；只有目标是主分支时才打；`--prefix ieioms` 打 `ieioms-v0.0.x` 独立系列），`--no-tag` 可跳过。它面向纯 Git 环境（不用 GitHub），与 `plain-change-report` 配对：主分支上的本地 tag（含前缀系列）作为锚点，供 `$plain-change-report --from <上一tag> --to <本tag>` 总结这次发布的变更（`--to` 省略时自动取同前缀系列最新）；`$release-tag-push` 提交当前改动、创建版本 tag 并推送（GitHub Actions 发布场景专用）；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
 
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 

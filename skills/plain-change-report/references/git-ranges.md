@@ -95,16 +95,19 @@ git diff --stat "<ref>..HEAD"                          # 净变化
 
 `--from <tagA> --to <tagB>` 汇报**两次发布之间**的净变化，配合 `publish-merge` 合并后自动打的递增 tag 使用（作为发布说明）。
 
-两端都要先校验；`--to` 省略时取**版本序最新**的 `v*` tag，并把实际取到的值报给调用者：
+两端都要先校验；`--to` 省略时取**与 `--from` 同前缀**的系列里最新的一个，并把实际取到的值报给调用者。先从 `--from` 识别前缀（`ieioms-v0.0.1` → `ieioms-`；`v0.0.3` → 无前缀），再在该系列内查找：
 
 ```bash
 git rev-parse --verify --quiet "<from>^{commit}"
 git rev-parse --verify --quiet "<to>^{commit}"
 
-# --to 省略时的解析（与 publish-merge 打 tag 用的是同一条命令，行为必须一致）
-TO=$(git tag --list 'v[0-9]*' --sort=-v:refname \
-  | grep -E '^v[0-9]+(\.[0-9]+)+$' | head -1)
+# --to 省略时：<前缀> 从 --from 识别（ieioms-v0.0.1 → 'ieioms-'；v0.0.3 → ''）
+# 查找必须带前缀隔离，不能全库取最新（见坑表）
+TO=$(git tag --list '<前缀>v[0-9]*' --sort=-v:refname \
+  | grep -E '^<前缀>v[0-9]+(\.[0-9]+)+$' | head -1)
 ```
+
+这与 `publish-merge` 打 tag 用的查找规则一致（`--prefix` 前缀系列独立递增），行为必须保持同步。
 
 取改动（区间语义与 `--since` 相同，`A..B` 不含 A 自身）：
 
@@ -197,6 +200,7 @@ N=$(git log --no-walk --oneline <sha...> | wc -l)
 
 | 坑 | 后果 | 正确做法 |
 | --- | ---- | -------- |
+| 多前缀 tag 混排时取“全局最新” | 不同系列交错，会拿到别的产品线的 tag（实测 `v1.2.3`、`v0.0.5`、`ieioms-v2-alpha` 交错排列） | 按前缀隔离查找：`--from` 是 `ieioms-v0.0.1` 就只在 `ieioms-v*` 里找 |
 | 只用 `--sort=-v:refname` 取最新 tag | `v2-alpha` 这类非语义化 tag 会排在最前（实测） | 叠加 `grep -E '^v[0-9]+(\.[0-9]+)+$'` 过滤 |
 | 大写 `V0.0.1` 的 tag | git 通配区分大小写，不会被 `v*` 匹配，也触发不了按 `v*` 触发的 workflow（实测） | tag 一律小写 `v` 开头 |
 | `git status --porcelain` 不带 `-uall` | 新增目录被折叠成一行，目录内文件全看不见 | 必须 `-uall` |

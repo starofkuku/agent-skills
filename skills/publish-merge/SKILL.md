@@ -128,6 +128,6 @@ $publish-merge develop master --prefix ieioms  # 打 ieioms-v0.0.x 系列的 tag
 
 ## 与其他 skill 的配合
 
-- 与 `plain-change-report` 配对使用：本 skill **每次合并到主分支**打一个递增 tag 作为锚点，之后用 `plain-change-report --from <上一个tag> --to <本次tag>` 生成这两个版本之间改动的通俗汇报，作为发布说明发给非技术读者（本地 tag 就够用，`--from/--to` 读的是本地 tag）。合并到测试环境等中间分支时没有锚点产生，不在此链路内。
+- 与 `plain-change-report` 配对使用：本 skill **每次合并到主分支**打一个递增 tag 作为锚点，之后用 `plain-change-report --from <上一个tag> --to <本次tag>` 总结**本次发布新引入**的内容（区间不含上一个 tag 那次）。分支里混有上游同步时加 `--mine`，只总结自己的提交。合并到测试环境等中间分支时没有锚点产生，不在此链路内。
 - 注意：tag 不推送远程，只在本机生效——换机器或其他人看不到这些锚点。需要共享锚点时手动 `git push origin <tag>`。
 - 本 skill 面向纯 Git 环境，与 `release-tag-push`（GitHub Actions 发布场景专用）没有依赖关系，tag 规则互不干涉。

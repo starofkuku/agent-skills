@@ -9,6 +9,7 @@
 - [未提交改动（默认）](#未提交改动默认)
 - [--since](#--since)
 - [--from / --to](#--from----to)
+- [--mine（只总结自己的提交）](#mine只总结自己的提交)
 - [--commits](#--commits)
 - [--last](#--last)
 - [取出净变化](#取出净变化)
@@ -118,7 +119,35 @@ git diff --stat "<from>..<to>"
 
 与 `--since` 的区别：`--since X` 终点是**当前 HEAD**（含 tag 之后的新提交，进展视角）；`--from/--to` 两端都是 tag（这次发布相对上次发布变了什么，对比视角）。刚打完 tag 且 HEAD 就是该 tag 时两者结果相同，但 `--from/--to` 不会受后续新提交影响。
 
+**边界硬规则：区间必须是 `from..to`，绝不写 `from^..to`。** `A..B` 不含 A 自身引入的改动（这是正确语义）；写成 `A^..B` 会把 from 那次发布已包含的内容全部带进报告——实测踩过的错。写报告前自查：`git log --oneline --no-merges "<from>..<to>"` 列出的最早一个提交，必须是 from **之后**的，不能属于 from 所在的那次合并。
+
 多仓库模式：任一端点在某仓库不存在就跳过该仓库并说明（前后端 tag 不同步是常态）；全部仓库都缺同一端点才报错停止。
+
+## --mine（只总结自己的提交）
+
+分支里混有上游同步（merge 进来的、不是自己写的）时，tag 区间只能圈定范围、圈定不了归属，必须叠加归属过滤。
+
+**主方案（单人开发）——按作者过滤：**
+
+```bash
+EMAIL=$(git config user.email)
+# 我的提交清单
+git log --oneline --no-merges --author="$EMAIL" "<区间>"
+# 报告正文的取材依据：我的提交的补丁
+git log -p --no-merges --author="$EMAIL" "<区间>"
+# 上游提交数（供一句话带过用差值法，不要逐个读它们的 patch）
+TOTAL=$(git rev-list --count --no-merges "<区间>")
+MINE=$(git rev-list --count --no-merges --author="$EMAIL" "<区间>")
+UPSTREAM=$((TOTAL - MINE))
+```
+
+**替代方案（团队多人，按拓扑排除）：** 上游是 merge 自某个可引用的远程分支时，可用 `^` 排除法精确圈出非上游提交（rebase/squash 同步会失效，此时只能靠作者过滤）：
+
+```bash
+git log --oneline --no-merges "<区间>" ^upstream/master
+```
+
+**取材规则：** `git diff` 无法按作者过滤，所以用了 `--mine` 后**不能拿净 diff 当正文依据**；以上面过滤后的提交补丁为准，自己的多个提交对同一处反复修改时按最终效果描述。上游部分在「其他调整」里写一句：「另含上游同步的更新，未在本报告展开」。
 
 ## --commits
 
@@ -200,6 +229,8 @@ N=$(git log --no-walk --oneline <sha...> | wc -l)
 
 | 坑 | 后果 | 正确做法 |
 | --- | ---- | -------- |
+| 区间写成 `from^..to`（闭区间直觉） | 把 from 那次发布已含的内容全带进报告（实测） | 区间必须 `from..to`；自查最早提交不属 from 那次发布 |
+| 用了 `--mine` 还拿净 diff 当正文 | 净 diff 含上游文件，无法按作者过滤 | 正文取材用 `git log -p --author` 过滤后的补丁 |
 | 多前缀 tag 混排时取“全局最新” | 不同系列交错，会拿到别的产品线的 tag（实测 `v1.2.3`、`v0.0.5`、`ieioms-v2-alpha` 交错排列） | 按前缀隔离查找：`--from` 是 `ieioms-v0.0.1` 就只在 `ieioms-v*` 里找 |
 | 只用 `--sort=-v:refname` 取最新 tag | `v2-alpha` 这类非语义化 tag 会排在最前（实测） | 叠加 `grep -E '^v[0-9]+(\.[0-9]+)+$'` 过滤 |
 | 大写 `V0.0.1` 的 tag | git 通配区分大小写，不会被 `v*` 匹配，也触发不了按 `v*` 触发的 workflow（实测） | tag 一律小写 `v` 开头 |

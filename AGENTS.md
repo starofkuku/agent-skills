@@ -14,12 +14,13 @@ AGENTS.md                    # 本文件
 skills/<skill-name>/         # 每个 skill 一个 kebab-case 目录
 ├── SKILL.md                 # 必需：frontmatter(name, description) + 流程
 ├── agents/openai.yaml       # Codex UI 元数据（display_name / short_description / default_prompt）
-└── references/*.md          # 可选：按需加载的细节文档或可复制模板
+├── references/*.md          # 可选：按需加载的细节文档或可复制模板
+└── scripts/                 # 可选：skill 依赖的脚本（纯标准库、无网络，如 rescue-session/scripts/extract.py）
 tmpmd/                       # 本地草稿，已被 .gitignore 忽略，永不提交
 ```
 
 - 每个 skill 的 `SKILL.md` 是唯一入口，其余文件都是按需补充的模板或参考。
-- 当前 skills：`subagent-driven-development`（含 `implementer-prompt.md`、`task-reviewer-prompt.md`）、`commit-push`、`publish-merge`、`release-tag-push`、`session-handoff`、`gha-docker-release`（含 `references/credentials.md`、`references/workflow-templates.md`）。
+- 当前 skills：`subagent-driven-development`（含 `implementer-prompt.md`、`task-reviewer-prompt.md`）、`commit-push`、`publish-merge`、`release-tag-push`、`session-handoff`、`gha-docker-release`（含 `references/`）、`plain-change-report`（含 `references/`）、`rescue-session`（含 `scripts/extract.py`）。
 - 新增或重命名 skill 后，必须同步更新 `README.md` 的清单表格、安装示例和目录结构图。
 
 ## 验证命令

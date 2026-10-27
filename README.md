@@ -12,6 +12,7 @@
 | `release-tag-push` | 格式化后跳过本地测试，提交当前改动、创建版本 tag 并推送 |
 | `session-handoff` | 在单仓库或多项目工作区中用一次性交接文档继续长任务 |
 | `gha-docker-release` | 在 fork 中用 GitHub Actions 构建推送 Docker 镜像，tag 触发时创建 GitHub Release，并按 `--channel` 发送一封合并的结果通知（邮件/飞书；`--no-release` 可关闭 Release） |
+| `rescue-session` | 把超过 ai-memory backfill 体积限制的巨型会话文件提炼为项目记忆（decisions/concepts 页面）：脚本提取用户消息骨架 + 助手结论尾部，分块总结后经 `memory_write_page` 落库；支持 codex/pi 提取器与会话 ID 自动定位 |
 | `plain-change-report` | 把代码改动整理成面向非技术读者的通俗中文汇报；支持未提交、提交区间、两个 tag 之间的发布对比（--from/--to，不含 from 那次），--mine 排除上游同步只总结自己的提交，前后端分仓时自动合并为一份报告 |
 
 ## 安装
@@ -24,6 +25,9 @@ npx skills add starofkuku/agent-skills -a codex
 
 # 只安装某个 skill
 npx skills add starofkuku/agent-skills --skill subagent-driven-development -a codex
+
+# 只安装会话抢救 skill
+npx skills add starofkuku/agent-skills --skill rescue-session -a codex
 
 # 只安装提交推送 skill
 npx skills add starofkuku/agent-skills --skill commit-push -a codex
@@ -82,6 +86,11 @@ skills/
 │   └── references/
 │       ├── credentials.md        # 组织级 Variables/Secrets（含飞书机器人）
 │       └── workflow-templates.md # 可复制的 workflow 模板（含通知合并与飞书签名）
+├── rescue-session/
+│   ├── SKILL.md                  # 巨型会话文件提炼为项目记忆
+│   ├── agents/openai.yaml        # Codex UI 元数据
+│   └── scripts/
+│       └── extract.py            # 会话骨架提取器（纯标准库，codex/pi/auto）
 └── plain-change-report/
     ├── SKILL.md                  # 改动通俗汇报（未提交/区间/指定提交）
     ├── agents/openai.yaml        # Codex UI 元数据
@@ -109,6 +118,7 @@ $release-tag-push
 $session-handoff
 $gha-docker-release
 $plain-change-report
+$rescue-session pi 019f88e3
 ```
 
 `$commit-push dev` 提交并推送 `dev`；`$publish-merge` 将源分支合并到目标分支并切回源分支，典型两阶段：`$publish-merge * develop`（开发→测试，不打 tag）、`$publish-merge develop master`（测试→主分支，**自动打递增版本 tag**，首次 `v0.0.1`，之后 patch +1，**只打本地不推送远程**；只有目标是主分支时才打；`--prefix ieioms` 打 `ieioms-v0.0.x` 独立系列），`--no-tag` 可跳过。它面向纯 Git 环境（不用 GitHub），与 `plain-change-report` 配对：主分支上的本地 tag（含前缀系列）作为锚点，供 `$plain-change-report --from <上一tag> --to <本tag>` 总结这次发布的变更（`--to` 省略时自动取同前缀系列最新）；`$release-tag-push` 提交当前改动、创建版本 tag 并推送（GitHub Actions 发布场景专用）；`$session-handoff` 在旧会话生成交接，在 `/new` 后再次调用即可恢复任务并删除已消费的交接文件。
@@ -116,6 +126,8 @@ $plain-change-report
 `$session-handoff` 不要求当前目录是 Git 仓库。对于包含多个子项目的聚合目录，它只核验当前任务涉及的路径和仓库。
 
 `$gha-docker-release` 用于 fork 场景下的镜像发布：组织级 Variables/Secrets（含 `DOCKERHUB_USERNAME`、`DOCKERHUB_ACCESSTOKEN`）、镜像构建推送、GitHub Release 创建，以及发布结果通知。通知渠道由 `--channel` 指定，默认 `email`：`$gha-docker-release --channel feishu` 只发飞书机器人，`$gha-docker-release --channel email,feishu` 两种都发。一次发布（一次 run）只发一封通知，正文汇总该 run 内全部 job 的结果。`v*` tag 推送时**默认创建 GitHub Release**（自动生成说明，可重复执行不会报已存在）；`--no-release` 显式关闭；分支上手动触发只构建推送不建 Release。
+
+`$rescue-session <agent名> <会话文件路径或 session-id 前缀>` 抢救超过 ai-memory backfill 体积限制（单条 >1MB / 单会话 >4096 事件 / 文件 >64MB）的巨型会话：脚本提取用户消息骨架与助手结论尾部（实测 2.6MB 会话 → 6.7KB 骨架），分块总结后经 `memory_write_page` 落成 `concepts/rescued-<id>.md` 等知识页，同一会话重复处理更新同一路径。支持 `codex`/`pi` 提取器与 ID 自动定位；**必须在目标项目目录内调用**（知识按 cwd 落库）。
 
 `$plain-change-report` 把工作区里未提交的改动整理成一份**不懂技术的人也能看懂**的中文汇报：按「新增功能 / 问题修复 / 体验优化 / 其他调整」分类，每条标注业务模块，末尾给出「需要留意」的上线关注点。报告写入仓库根目录的 `CHANGE-REPORT.local.md`（自动加入 `.git/info/exclude`，不会误提交），同时在对话里输出一份。它只读不改，不会提交或修改代码。
 

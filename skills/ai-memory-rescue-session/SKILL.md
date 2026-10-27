@@ -1,6 +1,6 @@
 ---
-name: rescue-session
-description: 把超过 ai-memory backfill 体积限制、无法自动导入的巨型会话文件，提炼为可检索的项目记忆（decisions/concepts 页面）。使用 `$rescue-session <agent名> <会话文件路径或session-id前缀>`，例如 `$rescue-session pi 019f88e3`；当 backfill 报 "exceeds the … limit" 或用户要求抢救某个大会话的历史知识时使用。必须在目标项目目录内调用。
+name: ai-memory-rescue-session
+description: 把超过 ai-memory backfill 体积限制、无法自动导入的巨型会话文件，提炼为可检索的项目记忆（decisions/concepts 页面）。使用 `$ai-memory-rescue-session <agent名> <会话文件路径或session-id前缀>`，例如 `$ai-memory-rescue-session pi 019f88e3`；当 backfill 报 "exceeds the … limit" 或用户要求抢救某个大会话的历史知识时使用。必须在目标项目目录内调用。
 ---
 
 # Rescue Session：巨型会话文件 → 项目记忆

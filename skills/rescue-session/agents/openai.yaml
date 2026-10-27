@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rescue Session"
-  short_description: "Distill an oversized session transcript into project memory"
-  default_prompt: "Use $rescue-session with an agent name and a session file path or session-id prefix to extract and summarize a transcript that ai-memory backfill rejected for size, then save the summary as project memory."

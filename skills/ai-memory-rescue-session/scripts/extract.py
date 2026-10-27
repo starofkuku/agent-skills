@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rescue-session: extract the human/assistant skeleton from a harness
+"""ai-memory-rescue-session: extract the human/assistant skeleton from a harness
 session transcript that ai-memory backfill refused (size limits).
 
 Usage:

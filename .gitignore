@@ -1,1 +1,3 @@
 tmpmd/
+__pycache__/
+*.pyc

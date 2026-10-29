@@ -45,7 +45,7 @@ $plain-change-report --repo admin-front,backend --since v1.1.0
 ## 边界
 
 - **只读不改。** 不提交、不推送、不改动任何被跟踪的文件，也不顺带改代码。
-- 唯一写入的文件是**工作区根目录**（调用时的当前目录）下的 `CHANGE-REPORT.local.md`。
+- **不写任何文件。** 报告只输出到**当前对话**，不生成 `CHANGE-REPORT.local.md` 或任何落盘副本；不要自作主张写文件、也不要问用户要不要写。
 - 报告只描述**已经存在的**改动，不替读者决定该不该上线。
 
 ## 核心原则
@@ -115,7 +115,6 @@ git rev-parse --verify --quiet "<ref>^{commit}"
 
 ### 4. 剔除不该进报告的改动
 
-- 本 skill 自己上一轮产出的 `CHANGE-REPORT.local.md`，忽略。
 - 构建产物、缓存、日志、依赖锁文件：合并成一条，不要逐条罗列。
 - 纯格式变动（缩进、换行、排序）：合并成一条「内部整理，功能没有变化」。
 - 已被后续修改推翻的中间态：不写。
@@ -151,20 +150,13 @@ git rev-parse --verify --quiet "<ref>^{commit}"
 - 只有单侧改动 → 正常写一条。
 - 判断不了两边是不是同一个功能 → **分开写，宁可两条也不错并**。
 
-### 7. 写入报告文件
+### 7. 输出到对话
 
-报告写入工作区根目录的 `CHANGE-REPORT.local.md`。先确保它不会被误提交——**仅当工作区根目录本身在某个 Git 仓库内时**才需要排除：
+直接把报告正文输出到**当前对话**作为回复。
 
-```bash
-if git rev-parse --show-toplevel >/dev/null 2>&1; then
-  git check-ignore -q CHANGE-REPORT.local.md || \
-    echo "CHANGE-REPORT.local.md" >> "$(git rev-parse --git-path info/exclude)"
-fi
-```
-
-- 用 `git rev-parse --git-path info/exclude`，它能正确处理 `.git` 是文件的情况（worktree、submodule），不要用 `--git-dir` 自己拼路径。
-- 多仓库模式下工作区根目录通常不是 Git 仓库，此时**什么都不用排除**，也不要去改子仓库的 exclude——报告文件不在它们的管辖范围内。
-- 该命令可重复执行，不会产生重复行。
+- **不要写任何文件**（包括 `CHANGE-REPORT.local.md`）；不建临时文件、不改 `.gitignore` / `.git/info/exclude`。
+- 不要问用户“要不要保存成文件”——需要文件时用户会自己提。
+- 报告之外可以补一两句给调用者看的核对信息（解析到的区间、纳入的仓库、被跳过的仓库），这些也只存在于对话里。
 
 ### 8. 报告模板
 
@@ -262,3 +254,4 @@ fi
 9. 有没有编造代码里看不出来的影响？——有就删掉或改成「需要技术同事确认」。
 10. 空的大类是不是还留在报告里？——删掉。
 11. 「需要留意」里的每条，都能从改动本身看出来吗？——不能就删。
+12. 有没有顺手生成了任何文件？——全部删掉，报告只留在对话里。
